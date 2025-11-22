@@ -1,0 +1,17 @@
+body {
+  margin: 0;
+  padding: 0;
+  background: #faf6ee;
+  display: flex;
+  justify-content: center;
+}
+
+.container {
+  width: 100%;
+  max-width: 1000px;
+}
+
+.invitation {
+  width: 100%;
+  display: block;
+}
