@@ -65,7 +65,13 @@
 
     // Load guest only once
     async function loadGuest() {
-        if (window.__variantPagesAdded) return; // guard against accidental re-entry
+        // Clear any previously added variant pages (supports re-run on new UUID without full reload)
+        ['page4','page5','page6','page7'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.remove();
+        });
+        guestEl.textContent = '';
+        guestEl.style.display = 'none';
         const params = new URLSearchParams(window.location.search);
         const uuid = params.get("uuid") || params.get("u");
         const container = document.getElementById('invitationContainer');
@@ -85,24 +91,36 @@
         // Always fetch fresh; no caching
 
         try {
-            const url = "https://script.google.com/macros/s/AKfycbyPmqckCOp-MhGV4DJu5UwOyRT3rkTKH4IcFvZ_avZY-kCSy75hmrGxARQFxWxqZXrOPg/exec?u=" + encodeURIComponent(uuid);
+            const url = "https://script.google.com/macros/s/AKfycbzlEZhRRtYleWC8b7OYU1XuX0AWi64x5H7G3t0xKLkhmsBb1cWrO9Zg6wOdI6uR0F1gYg/exec?u=" + encodeURIComponent(uuid);
 
             const controller = new AbortController();
-            const timeoutMs = 5000; // 5s timeout fallback
+            const timeoutMs = 10000; // 5s timeout fallback
             const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
             const res = await fetch(url, { method: 'GET', signal: controller.signal });
             clearTimeout(timeoutId);
             if (!res.ok) throw new Error("Network response not ok: " + res.status);
             let data = await res.json();
+            console.log('[Invitation] Raw API data:', data);
 
-            // Support either object {name:""} or array [{name:""}]
-            let name;
+            // Normalize to a single guest record matching the uuid
+            let guestRecord = null;
             if (Array.isArray(data)) {
-                name = data[0]?.name;
+                guestRecord = data.find(row => String(row.uuid).trim() === uuid.trim()) || null;
             } else if (data && typeof data === 'object') {
-                name = data.name || data.guest || data.fullName;
+                // If API returns single object ensure uuid matches; otherwise treat as not found
+                if (String(data.uuid).trim() === uuid.trim()) guestRecord = data; else guestRecord = null;
             }
+
+            if (!guestRecord) {
+                console.warn('[Invitation] No guest found for UUID:', uuid);
+                // show invitation without guest-specific pages
+                loader.classList.add('hidden');
+                container.classList.remove('hidden');
+                return;
+            }
+
+            const name = guestRecord.name || guestRecord.guest || guestRecord.fullName;
 
             // Fallback if no name found
             if (!name) {
@@ -124,19 +142,11 @@
                 return typeof v === 'number' ? v : parseInt(v) || 0;
             };
 
-            let haldi = 0, mandap = 0, sangeet = 0, jaan = 0;
-            if (Array.isArray(data)) {
-                const row = data[0] || {};
-                haldi = readField(row, 'haldi');
-                mandap = readField(row, 'mandap');
-                sangeet = readField(row, 'sangeet');
-                jaan = readField(row, 'jaan');
-            } else if (data && typeof data === 'object') {
-                haldi = readField(data, 'haldi');
-                mandap = readField(data, 'mandap');
-                sangeet = readField(data, 'sangeet');
-                jaan = readField(data, 'jaan');
-            }
+            // Extract variant values from matched record only
+            const haldi = readField(guestRecord, 'haldi');
+            const mandap = readField(guestRecord, 'mandap');
+            const sangeet = readField(guestRecord, 'sangeet');
+            const jaan = readField(guestRecord, 'jaan');
 
             const addVariantPage = (prefix, value) => {
                 if (value !== 2 && value !== 4) return; // ignore 0/invalid
@@ -151,7 +161,8 @@
             addVariantPage(5, mandap);
             addVariantPage(6, sangeet);
             addVariantPage(7, jaan);
-            window.__variantPagesAdded = true;
+            // Mark that pages reflect current uuid (optional flag if needed elsewhere)
+            window.__currentGuestUuid = uuid;
 
             // Done -> show invitation
             loader.classList.add('hidden');
