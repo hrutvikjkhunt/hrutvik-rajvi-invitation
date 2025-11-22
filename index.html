@@ -8,6 +8,8 @@
 </head>
 
 <body>
+    <div id="start-audio"></div>
+
     <audio id="bgmusic" autoplay loop muted playsinline>
         <source src="music/sound1.mp3" type="audio/mpeg">
     </audio>
@@ -29,17 +31,17 @@
 </html>
 
 <script>
-const overlay = document.getElementById("start-audio");
-const audio = document.getElementById("bgmusic");
+    const overlay = document.getElementById("start-audio");
+    const audio = document.getElementById("bgmusic");
 
-function enableAudio() {
-  audio.muted = false;
-  audio.volume = 1;
-  audio.play();
-  overlay.remove();
-}
+    function enableAudio() {
+        audio.muted = false;
+        audio.volume = 1;
+        audio.play();
+        overlay.remove();
+    }
 
-['click','touchstart','wheel','keydown','pointerdown'].forEach(eventType=>{
-  document.addEventListener(eventType, enableAudio, {once:true});
-});
+    ['click', 'touchstart', 'wheel', 'keydown', 'pointerdown'].forEach(eventType => {
+        document.addEventListener(eventType, enableAudio, { once: true });
+    });
 </script>
