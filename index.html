@@ -5,6 +5,10 @@
     <meta charset="UTF-8">
     <title>Khunt Parivaar</title>
     <link rel="stylesheet" href="style.css">
+    <!-- (Removed preconnect + extra styles to restore original layout) -->
+    <link href="https://fonts.googleapis.com/css2?family=Anek+Gujarati:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="icon" href="assets/logo.png" type="image/png">
+    <link rel="shortcut icon" href="assets/logo.png" type="image/png">
 </head>
 
 <body>
@@ -14,25 +18,30 @@
         <source src="assets/bg_music.mp3" type="audio/mpeg">
     </audio>
 
-    <div class="container">
+    <div id="loading" class="loading-overlay hidden" aria-live="polite" aria-busy="true">
+        <img src="assets/loading.png" alt="Loading" class="loading-image" />
+    </div>
 
-        <img src="assets/1.png" class="page">
-        <img src="assets/2.png" class="page">
-        <img src="assets/3.png" class="page">
-        <img src="assets/4.png" class="page">
-        <img src="assets/5.png" class="page">
-        <img src="assets/6.png" class="page">
-        <img src="assets/7.png" class="page">
+    <div class="container" id="invitationContainer">
+        <div class="page invitation">
+            <img src="assets/1.png" />
+            <div id="guestName" class="guest-name"></div>
+        </div>
+        <img id="page2" src="assets/2.png" class="page">
+        <img id="page3" src="assets/3.png" class="page">
+        <!-- Variant pages (4-7) will be injected dynamically after fetch based on haldi/mandap/sangeet/jaan values. -->
 
     </div>
 
 </body>
 
-</html>
-
 <script>
     const audio = document.getElementById("bgmusic");
+    const guestEl = document.getElementById("guestName");
 
+    // No placeholder to avoid layout shift; text appears only when loaded.
+
+    // Enable audio after first human gesture
     function enableAudio() {
         audio.muted = false;
         audio.play().catch(() => { });
@@ -49,7 +58,119 @@
         'keydown'
     ];
 
+    // Must be "once" (all lowercase)
     events.forEach(ev => {
-        window.addEventListener(ev, enableAudio, { Once: true, passive: true });
+        window.addEventListener(ev, enableAudio, { once: true, passive: true });
     });
+
+    // Load guest only once
+    async function loadGuest() {
+        if (window.__variantPagesAdded) return; // guard against accidental re-entry
+        const params = new URLSearchParams(window.location.search);
+        const uuid = params.get("uuid") || params.get("u");
+        const container = document.getElementById('invitationContainer');
+        const loader = document.getElementById('loading');
+        if (!uuid) {
+            // No uuid -> show invitation base pages only and hide guest name
+            guestEl.style.display = 'none';
+            container.classList.remove('hidden');
+            loader.classList.add('hidden');
+            return;
+        }
+
+        // Hide invitation, show loader until name is fetched
+        container.classList.add('hidden');
+        loader.classList.remove('hidden');
+
+        // Always fetch fresh; no caching
+
+        try {
+            const url = "https://script.google.com/macros/s/AKfycbyPmqckCOp-MhGV4DJu5UwOyRT3rkTKH4IcFvZ_avZY-kCSy75hmrGxARQFxWxqZXrOPg/exec?u=" + encodeURIComponent(uuid);
+
+            const controller = new AbortController();
+            const timeoutMs = 5000; // 5s timeout fallback
+            const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+            const res = await fetch(url, { method: 'GET', signal: controller.signal });
+            clearTimeout(timeoutId);
+            if (!res.ok) throw new Error("Network response not ok: " + res.status);
+            let data = await res.json();
+
+            // Support either object {name:""} or array [{name:""}]
+            let name;
+            if (Array.isArray(data)) {
+                name = data[0]?.name;
+            } else if (data && typeof data === 'object') {
+                name = data.name || data.guest || data.fullName;
+            }
+
+            // Fallback if no name found
+            if (!name) {
+                console.warn("Guest name not found in API response", data);
+                // still update pages based on whatever fields exist then show invitation
+            }
+
+            // Set guest name (if present)
+            if (name) {
+                guestEl.textContent = name;
+                guestEl.style.display = 'block';
+            }
+
+            // Read page-variant fields and update pages accordingly
+            const readField = (obj, key) => {
+                if (!obj) return 0;
+                const v = obj[key];
+                // numeric or string -> coerce to number or 0
+                return typeof v === 'number' ? v : parseInt(v) || 0;
+            };
+
+            let haldi = 0, mandap = 0, sangeet = 0, jaan = 0;
+            if (Array.isArray(data)) {
+                const row = data[0] || {};
+                haldi = readField(row, 'haldi');
+                mandap = readField(row, 'mandap');
+                sangeet = readField(row, 'sangeet');
+                jaan = readField(row, 'jaan');
+            } else if (data && typeof data === 'object') {
+                haldi = readField(data, 'haldi');
+                mandap = readField(data, 'mandap');
+                sangeet = readField(data, 'sangeet');
+                jaan = readField(data, 'jaan');
+            }
+
+            const addVariantPage = (prefix, value) => {
+                if (value !== 2 && value !== 4) return; // ignore 0/invalid
+                const img = document.createElement('img');
+                img.id = 'page' + prefix;
+                img.className = 'page';
+                img.src = `assets/${prefix}-${value}.png`;
+                container.appendChild(img);
+            };
+
+            addVariantPage(4, haldi);
+            addVariantPage(5, mandap);
+            addVariantPage(6, sangeet);
+            addVariantPage(7, jaan);
+            window.__variantPagesAdded = true;
+
+            // Done -> show invitation
+            loader.classList.add('hidden');
+            container.classList.remove('hidden');
+        } catch (e) {
+            console.error("Error loading guest:", e);
+            // Show invitation even if failed (name blank)
+            loader.classList.add('hidden');
+            container.classList.remove('hidden');
+            guestEl.style.display = 'none'; // hide if fetch failed
+        }
+    }
+
+    // Single invocation after DOM ready (removed body onload to prevent duplicates)
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => loadGuest(), { once: true });
+    } else {
+        loadGuest();
+    }
 </script>
+
+</html>
