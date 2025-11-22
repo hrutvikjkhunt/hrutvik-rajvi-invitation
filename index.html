@@ -14,7 +14,6 @@
         <source src="assets/bg_music.mp3" type="audio/mpeg">
     </audio>
 
-
     <div class="container">
 
         <img src="assets/1.png" class="page">
@@ -34,12 +33,23 @@
 <script>
     const audio = document.getElementById("bgmusic");
 
-    function startAudio() {
+    function enableAudio() {
         audio.muted = false;
         audio.play().catch(() => { });
     }
 
-    ['click', 'touchstart', 'pointerdown', 'keydown', 'scroll', 'wheel'].forEach(eventName => {
-        window.addEventListener(eventName, startAudio, { once: true });
+    const events = [
+        'click',
+        'touchstart',
+        'touchmove',
+        'scroll',
+        'wheel',
+        'pointerdown',
+        'mousemove',
+        'keydown'
+    ];
+
+    events.forEach(ev => {
+        window.addEventListener(ev, enableAudio, { Once: true, passive: true });
     });
 </script>
