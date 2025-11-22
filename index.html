@@ -8,10 +8,9 @@
 </head>
 
 <body>
-    <audio id="bgmusic" loop>
+    <audio id="bgmusic" autoplay loop muted>
         <source src="music/sound1.mp3" type="audio/mpeg">
     </audio>
-
 
     <div class="container">
 
@@ -30,25 +29,26 @@
 </html>
 
 <script>
-  let started = false;
-  const audio = document.getElementById("bgmusic");
+    let started = false;
+    const audio = document.getElementById("bgmusic");
 
-  function startMusic() {
-    if (!started) {
-      audio.play();
-      started = true;
+    function unmuteMusic() {
+        if (!started) {
+            audio.muted = false;
+            audio.volume = 1;
+            started = true;
 
-      document.removeEventListener('scroll', startMusic);
-      document.removeEventListener('touchstart', startMusic);
-      document.removeEventListener('click', startMusic);
-      document.removeEventListener('pointermove', startMusic);
-      document.removeEventListener('wheel', startMusic);
+            document.removeEventListener('scroll', unmuteMusic);
+            document.removeEventListener('touchstart', unmuteMusic);
+            document.removeEventListener('click', unmuteMusic);
+            document.removeEventListener('pointermove', unmuteMusic);
+            document.removeEventListener('wheel', unmuteMusic);
+        }
     }
-  }
 
-  document.addEventListener('scroll', startMusic);
-  document.addEventListener('touchstart', startMusic);
-  document.addEventListener('click', startMusic);
-  document.addEventListener('pointermove', startMusic);
-  document.addEventListener('wheel', startMusic);
+    document.addEventListener('scroll', unmuteMusic);
+    document.addEventListener('touchstart', unmuteMusic);
+    document.addEventListener('click', unmuteMusic);
+    document.addEventListener('pointermove', unmuteMusic);
+    document.addEventListener('wheel', unmuteMusic);
 </script>
