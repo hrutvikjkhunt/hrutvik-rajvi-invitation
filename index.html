@@ -37,13 +37,18 @@
     if (!started) {
       audio.play();
       started = true;
+
       document.removeEventListener('scroll', startMusic);
       document.removeEventListener('touchstart', startMusic);
       document.removeEventListener('click', startMusic);
+      document.removeEventListener('pointermove', startMusic);
+      document.removeEventListener('wheel', startMusic);
     }
   }
 
   document.addEventListener('scroll', startMusic);
   document.addEventListener('touchstart', startMusic);
   document.addEventListener('click', startMusic);
+  document.addEventListener('pointermove', startMusic);
+  document.addEventListener('wheel', startMusic);
 </script>
