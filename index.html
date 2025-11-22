@@ -8,7 +8,7 @@
 </head>
 
 <body>
-    <audio id="bgmusic" autoplay loop muted>
+    <audio id="bgmusic" autoplay loop muted playsinline>
         <source src="music/sound1.mp3" type="audio/mpeg">
     </audio>
 
@@ -29,26 +29,17 @@
 </html>
 
 <script>
-    let started = false;
-    const audio = document.getElementById("bgmusic");
+const overlay = document.getElementById("start-audio");
+const audio = document.getElementById("bgmusic");
 
-    function unmuteMusic() {
-        if (!started) {
-            audio.muted = false;
-            audio.volume = 1;
-            started = true;
+function enableAudio() {
+  audio.muted = false;
+  audio.volume = 1;
+  audio.play();
+  overlay.remove();
+}
 
-            document.removeEventListener('scroll', unmuteMusic);
-            document.removeEventListener('touchstart', unmuteMusic);
-            document.removeEventListener('click', unmuteMusic);
-            document.removeEventListener('pointermove', unmuteMusic);
-            document.removeEventListener('wheel', unmuteMusic);
-        }
-    }
-
-    document.addEventListener('scroll', unmuteMusic);
-    document.addEventListener('touchstart', unmuteMusic);
-    document.addEventListener('click', unmuteMusic);
-    document.addEventListener('pointermove', unmuteMusic);
-    document.addEventListener('wheel', unmuteMusic);
+['click','touchstart','wheel','keydown','pointerdown'].forEach(eventType=>{
+  document.addEventListener(eventType, enableAudio, {once:true});
+});
 </script>
