@@ -33,6 +33,17 @@
 
     </div>
 
+    <div class="location-buttons" id="locationButtons" style="display:none;">
+        <a href="https://maps.app.goo.gl/R5AGCNo9C5mb7X217" target="_blank" rel="noopener noreferrer"
+            class="map-btn jaan-btn">
+            📍 સહજ ફાર્મ
+        </a>
+        <a href="https://maps.app.goo.gl/spBv7As2qnrt7cCe9" target="_blank" rel="noopener noreferrer"
+            class="map-btn sangeet-btn">
+            📍 કલાકૃતિ ફાર્મ
+        </a>
+    </div>
+
 </body>
 
 <script>
@@ -66,7 +77,7 @@
     // Load guest only once
     async function loadGuest() {
         // Clear any previously added variant pages (supports re-run on new UUID without full reload)
-        ['page4','page5','page6','page7'].forEach(id => {
+        ['page4', 'page5', 'page6', 'page7'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.remove();
         });
@@ -147,6 +158,23 @@
             const mandap = readField(guestRecord, 'mandap');
             const sangeet = readField(guestRecord, 'sangeet');
             const jaan = readField(guestRecord, 'jaan');
+
+            const locationBox = document.getElementById("locationButtons");
+            const sangeetBtn = document.querySelector(".sangeet-btn");
+            const jaanBtn = document.querySelector(".jaan-btn");
+
+            // show the container now that data is ready
+            locationBox.style.display = "flex";
+
+            // sangeet always visible
+            sangeetBtn.style.display = "inline-block";
+
+            // jaan only if invited
+            if (guestRecord.jaan == 0 || guestRecord.jaan === "0") {
+                jaanBtn.style.display = "none";
+            } else {
+                jaanBtn.style.display = "inline-block";
+            }
 
             const addVariantPage = (prefix, value) => {
                 if (value !== 2 && value !== 4) return; // ignore 0/invalid
