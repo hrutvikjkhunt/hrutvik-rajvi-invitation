@@ -102,3 +102,35 @@ body {
 .hidden {
   display: none !important;
 }
+
+.location-buttons {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+
+  width: 100%;
+  max-width: 500px;       /* ⬅ max width */
+  
+  display: flex;
+  gap: 20px;
+  justify-content: center; /* center if one button */
+  z-index: 999999;
+}
+
+.map-btn {
+  background: #7f0d01;
+  color: white;
+  flex: 1;                 /* equal width for both */
+  
+  height: 60px;
+  line-height: 60px;       /* vertical centering */
+  
+  border-radius: 50px;
+  font-family: 'Anek Gujarati', serif;
+  font-size: 22px;
+  font-weight: bold;
+  text-decoration: none;
+  text-align: center;       /* horizontal centering */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
